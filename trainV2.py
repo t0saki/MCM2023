@@ -152,7 +152,7 @@ optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 # dataloader.dataset.data = dataloader.dataset.data.iloc[2:]
 
 # Train model
-num_epochs = 10000
+num_epochs = 100000
 for epoch in range(num_epochs):
     # Train for one epoch and get average loss
     train_loss = train(model, dataloader, optimizer, criterion, device)

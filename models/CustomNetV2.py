@@ -16,29 +16,33 @@ class CustomNetV2(nn.Module):
 
         # Define FCN for number input
         self.numbers_fcn = nn.Sequential(
-            nn.Linear(num_numbers, 128),
+            nn.Linear(num_numbers, 512),
+            nn.ReLU(),
+            nn.Linear(512, 256),
+            nn.ReLU(),
+            nn.Linear(256, 128),
             nn.ReLU(),
             nn.Linear(128, 64),
-            nn.ReLU(),
-            nn.Linear(64, 32),
             nn.ReLU(),
             nn.Dropout(0.2),
         )
 
         # Define FCN for 5 character input
         self.chars_fcn = nn.Sequential(
-            nn.Linear(5*26, 128),
+            nn.Linear(5*26, 512),
+            nn.ReLU(),
+            nn.Linear(512, 256),
+            nn.ReLU(),
+            nn.Linear(256, 128),
             nn.ReLU(),
             nn.Linear(128, 64),
-            nn.ReLU(),
-            nn.Linear(64, 32),
             nn.ReLU(),
             nn.Dropout(0.2),
         )
 
         # Define combined FCN
         self.combined_fcn = nn.Sequential(
-            nn.Linear(self.roberta.config.hidden_size + 32*2, 256),
+            nn.Linear(self.roberta.config.hidden_size + 64*2, 256),
             nn.ReLU(),
             nn.Linear(256, 128),
             nn.ReLU(),
