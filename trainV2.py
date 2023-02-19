@@ -152,6 +152,10 @@ optimizer = torch.optim.Adam(model.parameters(), lr=3e-5)
 # drop the first line of the data
 # dataloader.dataset.data = dataloader.dataset.data.iloc[2:]
 
+# Save loss to csv
+with open('loss.csv', 'w') as f:
+    f.write('Epoch, Loss\n')
+
 # Train model
 num_epochs = 100000
 for epoch in range(num_epochs):
@@ -160,6 +164,9 @@ for epoch in range(num_epochs):
     train_loss_str='{:.4e}'.format(train_loss)
     # Print the loss for the epoch
     print(f"Epoch {epoch+1} loss: {train_loss_str}")
+    # Save loss to csv
+    with open('loss.csv', 'a') as f:
+        f.write(f'{epoch+1}, {train_loss_str}\n')
     if epoch % 50 == 0:
         torch.save(model.state_dict(), "/mnt/d/checkpoints/"+"wordleV2"+"_"+str(epoch)+"epochs"+train_loss_str)
 
