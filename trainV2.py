@@ -135,8 +135,9 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model.to(device)
 
 # Define loss function and optimizer
-criterion = torch.nn.MSELoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
+# using categorical cross-entropy loss
+criterion = torch.nn.CrossEntropyLoss()
+optimizer = torch.optim.Adam(model.parameters(), lr=3e-5)
 
 # # print first 6 rows of dataloader
 # print(dataloader.dataset.data.head(6))
