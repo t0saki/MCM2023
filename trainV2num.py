@@ -3,7 +3,7 @@ import pandas as pd
 from torch.utils.data import Dataset, DataLoader
 import torchvision.transforms as transforms
 from transformers import RobertaTokenizer
-from models.CustomNetV2 import CustomNetV2
+from models.CustomNetV2num import CustomNetV2num
 from tqdm import tqdm
 from utils import resize_word_list, NormalizeData
 
@@ -34,7 +34,7 @@ class TrainingDataset(Dataset):
         weeknum = row['WeekNum']
         contest_num = row['Contest number']
         isHoliday = row['isHoliday']
-        targets = row[['Number of reported results', 'Number in hard mode', '1 try', '2 tries', '3 tries', '4 tries', '5 tries', '6 tries', '7 or more tries (X)']].values.astype(float)
+        targets = row[target_columns_no_percentage].values.astype(float)
 
         # Tokenize the input word
         input_ids = self.tokenizer.encode(word, add_special_tokens=True, return_tensors='pt', max_length=5, truncation=True)
@@ -115,12 +115,12 @@ def train(model, dataloader, optimizer, criterion, device):
 data = pd.read_csv('Data_V1.3.csv')
 data_dict = data.to_dict('records')
 # tries percentage should be divided by 100
-data[target_columns_percentage] = data[target_columns_percentage].div(100)
+# data[target_columns_percentage] = data[target_columns_percentage].div(100)
 
 # Normalize the data, target_columns without percentage
 data, means, stds = NormalizeData(data, input_columns, target_columns_no_percentage)
 # record the means and stds to a file
-with open('means_stds.txt', 'w') as f:
+with open('means_stds_num.txt', 'w') as f:
     f.write(str(means) + '\n' + str(stds))
 
 # tuple data to dict, recovery column names from data_dict
@@ -151,15 +151,15 @@ dataloader = DataLoader(dataset, batch_size=16, shuffle=False)
 #     batch[1] = normalizer_output(batch[1])
 
 # Create model and move to device
-model = CustomNetV2('roberta-base', num_numbers=5)
-model.load_state_dict(torch.load("/mnt/d/checkpoints/wordleV2.1_1000epochs 1.7660e-02"))
+model = CustomNetV2num('roberta-base', num_numbers=5)
+model.load_state_dict(torch.load("/mnt/d/checkpoints/numV2.1_500epochs 2.8434e-01"))
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model.to(device)
 
 # Define loss function and optimizer
 # using categorical cross-entropy loss
 criterion = torch.nn.MSELoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=1e-6)
+optimizer = torch.optim.Adam(model.parameters(), lr=1e-5)
 
 # # print first 6 rows of dataloader
 print(dataloader.dataset.data.head(6))
@@ -175,7 +175,7 @@ print(dataloader.dataset.data.head(6))
 # dataloader.dataset.data = dataloader.dataset.data.iloc[2:]
 
 # Save loss to csv
-with open('loss.csv', 'w') as f:
+with open('lossnum.csv', 'w') as f:
     f.write('Epoch, Loss\n')
 
 # Train model
@@ -187,10 +187,10 @@ for epoch in range(num_epochs):
     # Print the loss for the epoch
     print(f"Epoch {epoch+1} loss: {train_loss_str}")
     # Save loss to csv
-    with open('loss.csv', 'a') as f:
+    with open('lossnum.csv', 'a') as f:
         f.write(f'{epoch+1}, {train_loss_str}\n')
     if epoch % 50 == 0:
-        torch.save(model.state_dict(), "/mnt/d/checkpoints/"+"wordleV2.1"+"_"+str(epoch)+"epochs "+train_loss_str)
+        torch.save(model.state_dict(), "/mnt/d/checkpoints/"+"numV2.1"+"_"+str(epoch)+"epochs "+train_loss_str)
 
 # Save model
-torch.save(model.state_dict(), "checkpoints/"+"wordleV2.1"+"_"+str(num_epochs)+"final "+train_loss_str)
+torch.save(model.state_dict(), "checkpoints/"+"numV2.1"+"_"+str(num_epochs)+"final "+train_loss_str)

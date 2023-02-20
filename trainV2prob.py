@@ -10,9 +10,9 @@ from utils import resize_word_list, NormalizeData
 # Define dataset class
 word_column = 'Word'
 input_columns = ['Month', 'Day', 'WeekNum', 'Contest number', 'isHoliday']
-target_columns = ['Number of reported results', 'Number in hard mode', '1 try', '2 tries', '3 tries', '4 tries', '5 tries', '6 tries', '7 or more tries (X)']
+target_columns = ['Average', 'Sigma', '1 try', '2 tries', '3 tries', '4 tries', '5 tries', '6 tries', '7 or more tries (X)']
 target_columns_percentage = ['1 try', '2 tries', '3 tries', '4 tries', '5 tries', '6 tries', '7 or more tries (X)']
-target_columns_no_percentage = ['Number of reported results', 'Number in hard mode']
+target_columns_no_percentage = ['Average', 'Sigma']
 
 class TrainingDataset(Dataset):
     def __init__(self, data, tokenizer):
@@ -35,7 +35,7 @@ class TrainingDataset(Dataset):
         contest_num = row['Contest number']
         isHoliday = row['isHoliday']
         # targets = row[['Number of reported results', 'Number in hard mode', '1 try', '2 tries', '3 tries', '4 tries', '5 tries', '6 tries', '7 or more tries (X)']].values.astype(float)
-        targets = row[['1 try', '2 tries', '3 tries', '4 tries', '5 tries', '6 tries', '7 or more tries (X)']].values.astype(float)
+        targets = row[target_columns_no_percentage].values.astype(float)
 
         # Tokenize the input word
         input_ids = self.tokenizer.encode(word, add_special_tokens=True, return_tensors='pt', max_length=5, truncation=True)
@@ -116,12 +116,12 @@ def train(model, dataloader, optimizer, criterion, device):
 data = pd.read_csv('Data_V1.3.csv')
 data_dict = data.to_dict('records')
 # tries percentage should be divided by 100
-data[target_columns_percentage] = data[target_columns_percentage].div(100)
+# data[target_columns_percentage] = data[target_columns_percentage].div(100)
 
 # Normalize the data, target_columns without percentage
 data, means, stds = NormalizeData(data, input_columns, target_columns_no_percentage)
 # record the means and stds to a file
-with open('means_stds.txt', 'w') as f:
+with open('means_stds_prob.txt', 'w') as f:
     f.write(str(means) + '\n' + str(stds))
 
 # tuple data to dict, recovery column names from data_dict
@@ -153,14 +153,14 @@ dataloader = DataLoader(dataset, batch_size=16, shuffle=False)
 
 # Create model and move to device
 model = CustomNetV2prob('roberta-base', num_numbers=5)
-# model.load_state_dict(torch.load("/mnt/d/checkpoints/wordleV2.1_1000epochs 1.7660e-02"))
+model.load_state_dict(torch.load("/mnt/d/checkpoints/probV2.2_700epochs 3.4306e-01"))
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model.to(device)
 
 # Define loss function and optimizer
 # using categorical cross-entropy loss
 criterion = torch.nn.MSELoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=1e-6)
+optimizer = torch.optim.Adam(model.parameters(), lr=1e-5)
 
 # # print first 6 rows of dataloader
 print(dataloader.dataset.data.head(6))
@@ -191,7 +191,7 @@ for epoch in range(num_epochs):
     with open('lossprob.csv', 'a') as f:
         f.write(f'{epoch+1}, {train_loss_str}\n')
     if epoch % 50 == 0:
-        torch.save(model.state_dict(), "/mnt/d/checkpoints/"+"probV2.1"+"_"+str(epoch)+"epochs "+train_loss_str)
+        torch.save(model.state_dict(), "/mnt/d/checkpoints/"+"probV2.2"+"_"+str(epoch)+"epochs "+train_loss_str)
 
 # Save model
 torch.save(model.state_dict(), "checkpoints/"+"probV2.1"+"_"+str(num_epochs)+"final "+train_loss_str)

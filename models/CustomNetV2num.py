@@ -2,9 +2,9 @@ import torch
 import torch.nn as nn
 import transformers
 
-class CustomNetV2(nn.Module):
+class CustomNetV2num(nn.Module):
     def __init__(self, roberta_model_name, num_numbers):
-        super(CustomNetV2, self).__init__()
+        super(CustomNetV2num, self).__init__()
 
         # Load pre-trained RoBERTa model and tokenizer
         self.roberta = transformers.RobertaModel.from_pretrained(roberta_model_name)
@@ -54,8 +54,8 @@ class CustomNetV2(nn.Module):
             nn.ReLU(),
             nn.Linear(16, 8),
             nn.ReLU(),
-            nn.Dropout(0.2),
-            nn.Linear(8, 2)
+            nn.Linear(8, 2),
+            nn.Dropout(0.2)
         )
 
     def forward(self, input_ids, attention_mask, input_numbers, input_chars):
