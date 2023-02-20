@@ -86,6 +86,13 @@ def evaluate(model, data_loader, criterion, device):
             batch_targets = batch_targets.to(device).float()
 
             outputs = model(**batch_inputs)
+
+            # from torchviz import make_dot
+            # # from models.CustomNetV2num import CustomNetV2num
+            # dot = make_dot(outputs, params=dict(model.named_parameters()))
+            # dot.render(filename='custom_net_v2_num', format='png')
+            # exit()
+
             outputs_list.append(outputs)
             loss = criterion(outputs, batch_targets)
             # acc = binary_accuracy(outputs, targets)
@@ -96,7 +103,7 @@ def evaluate(model, data_loader, criterion, device):
     return epoch_loss / len(data_loader), outputs_list
 
 # Load the data
-data = pd.read_csv('WordleStats23.csv')
+data = pd.read_csv('CustomSet.csv')
 tokenizer = RobertaTokenizer.from_pretrained('roberta-base')
 
 # Normalize the data
@@ -120,7 +127,7 @@ data = NormalizeDataWithMeansStds(data, input_columns, target_columns_no_percent
 
 # Load the model
 model = CustomNetV2num('roberta-base', num_numbers=5)
-model.load_state_dict(torch.load("/mnt/d/checkpoints/numV2.1_50epochs 2.1937e-01"))
+model.load_state_dict(torch.load("/mnt/d/checkpoints2/numV3_1100epochs 1.5926e-01"))
 
 # Define the device
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -149,5 +156,7 @@ outputs.to_csv('raw_outputs_num.csv', index=False)
 for col in target_columns_no_percentage:
     index = target_columns_no_percentage.index(col)
     outputs.iloc[:, index] = DenormalizeData(outputs.iloc[:, index], means[len(input_columns)+index], stds[len(input_columns)+index])
+
+print(outputs)
 
 outputs.to_csv('outputs_num.csv', index=False)

@@ -86,6 +86,9 @@ def evaluate(model, data_loader, criterion, device):
             batch_targets = batch_targets.to(device).float()
 
             outputs = model(**batch_inputs)
+
+
+
             outputs_list.append(outputs)
             loss = criterion(outputs, batch_targets)
             # acc = binary_accuracy(outputs, targets)
@@ -96,7 +99,7 @@ def evaluate(model, data_loader, criterion, device):
     return epoch_loss / len(data_loader), outputs_list
 
 # Load the data
-data = pd.read_csv('WordleStats23.csv')
+data = pd.read_csv('CustomSet.csv')
 tokenizer = RobertaTokenizer.from_pretrained('roberta-base')
 
 # Normalize the data
@@ -120,7 +123,7 @@ data = NormalizeDataWithMeansStds(data, input_columns, target_columns_no_percent
 
 # Load the model
 model = CustomNetV2prob('roberta-base', num_numbers=5)
-model.load_state_dict(torch.load("/mnt/d/checkpoints/probV2.2_650epochs 3.4657e-01"))
+model.load_state_dict(torch.load("/mnt/d/checkpoints2/probV3_1100epochs 2.7993e-01"))
 
 # Define the device
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -130,11 +133,20 @@ model = model.to(device)
 dataset = EvaluationDataset(data, tokenizer)
 data_loader = DataLoader(dataset, batch_size=16, shuffle=False)
 
+# get model input shape
+for batch_inputs, batch_targets in data_loader:
+    print(batch_inputs['input_ids'].shape)
+    print(batch_inputs['attention_mask'].shape)
+    print(batch_inputs['input_numbers'].shape)
+    print(batch_inputs['input_chars'].shape)
+    break
+
 # Define the loss function
 criterion = torch.nn.MSELoss()
 
 # Evaluate the model
 loss, outputs_list = evaluate(model, data_loader, criterion, device)
+# print(data_loader.shape)
 print(f'| Loss: {loss:.4f} |')
 
 # Save the outputs to csv

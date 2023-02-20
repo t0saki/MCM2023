@@ -5,7 +5,7 @@ import torchvision.transforms as transforms
 from transformers import RobertaTokenizer
 from models.CustomNetV2num import CustomNetV2num
 from tqdm import tqdm
-from utils import resize_word_list, NormalizeData
+from utils import resize_word_list, NormalizeData, NormalizeDataCustom
 
 # Define dataset class
 word_column = 'Word'
@@ -112,16 +112,33 @@ def train(model, dataloader, optimizer, criterion, device):
     return total_loss / len(dataloader)
 
 # Load data and tokenizer
-data = pd.read_csv('Data_V1.3.csv')
+data = pd.read_csv('CustomSet.csv')
 data_dict = data.to_dict('records')
 # tries percentage should be divided by 100
 # data[target_columns_percentage] = data[target_columns_percentage].div(100)
 
-# Normalize the data, target_columns without percentage
-data, means, stds = NormalizeData(data, input_columns, target_columns_no_percentage)
-# record the means and stds to a file
-with open('means_stds_num.txt', 'w') as f:
-    f.write(str(means) + '\n' + str(stds))
+# # Normalize the data, target_columns without percentage
+# data, means, stds = NormalizeData(data, input_columns, target_columns_no_percentage)
+# # record the means and stds to a file
+# with open('means_stds_num.txt', 'w') as f:
+#     f.write(str(means) + '\n' + str(stds))
+
+# Read the means and stds from means_stds.txt, 2 lines
+with open('means_stds_num.txt', 'r') as f:
+    means_stds = f.read()
+means_stds = means_stds.splitlines()
+# printed with '[' and ']', so remove them
+means_stds[0] = means_stds[0][1:-1]
+means_stds[1] = means_stds[1][1:-1]
+# split the string into a list
+means_stds[0] = means_stds[0].split(', ')
+means_stds[1] = means_stds[1].split(', ')
+# convert the list of strings to list of floats
+means = [float(i) for i in means_stds[0]]
+stds = [float(i) for i in means_stds[1]]
+
+# Normalize the data
+data = NormalizeDataCustom(data, input_columns, target_columns_no_percentage, means, stds)
 
 # tuple data to dict, recovery column names from data_dict
 # data_new = []
@@ -135,7 +152,7 @@ data[word_column] = resize_word_list(data[word_column])
 
 # Create dataset and dataloader
 dataset = TrainingDataset(data, tokenizer)
-dataloader = DataLoader(dataset, batch_size=16, shuffle=False)
+dataloader = DataLoader(dataset, batch_size=16, shuffle=True)
 
 # # Normalize the dataloader
 # mean_input = torch.mean(torch.cat([batch[0]['input_numbers'] for batch in dataloader]))
@@ -152,7 +169,7 @@ dataloader = DataLoader(dataset, batch_size=16, shuffle=False)
 
 # Create model and move to device
 model = CustomNetV2num('roberta-base', num_numbers=5)
-model.load_state_dict(torch.load("/mnt/d/checkpoints/numV2.1_500epochs 2.8434e-01"))
+model.load_state_dict(torch.load("/mnt/d/checkpoints2/numV3_1100epochs 1.5926e-01"))
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model.to(device)
 
@@ -179,7 +196,7 @@ with open('lossnum.csv', 'w') as f:
     f.write('Epoch, Loss\n')
 
 # Train model
-num_epochs = 100000
+num_epochs = 1000000
 for epoch in range(num_epochs):
     # Train for one epoch and get average loss
     train_loss = train(model, dataloader, optimizer, criterion, device)
@@ -190,7 +207,7 @@ for epoch in range(num_epochs):
     with open('lossnum.csv', 'a') as f:
         f.write(f'{epoch+1}, {train_loss_str}\n')
     if epoch % 50 == 0:
-        torch.save(model.state_dict(), "/mnt/d/checkpoints/"+"numV2.1"+"_"+str(epoch)+"epochs "+train_loss_str)
+        torch.save(model.state_dict(), "/mnt/d/checkpoints2/"+"numV3"+"_"+str(epoch)+"epochs "+train_loss_str)
 
 # Save model
-torch.save(model.state_dict(), "checkpoints/"+"numV2.1"+"_"+str(num_epochs)+"final "+train_loss_str)
+torch.save(model.state_dict(), "checkpoints/"+"numV3"+"_"+str(num_epochs)+"final "+train_loss_str)

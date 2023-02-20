@@ -15,13 +15,24 @@ def NormalizeData(data, input_columns, target_columns):
     stds = []
     for column in input_columns:
         means.append(data[column].mean())
-        stds.append(data[column].std())
+        std = data[column].std()
+        if std == 0:
+            std = 1
+        stds.append(std)
     for column in target_columns:
         means.append(data[column].mean())
-        stds.append(data[column].std())
+        std = data[column].std()
+        if std == 0:
+            std = 1
+        stds.append(std)
     data[input_columns] = (data[input_columns] - means[:len(input_columns)]) / stds[:len(input_columns)]
     data[target_columns] = (data[target_columns] - means[len(input_columns):]) / stds[len(input_columns):]
     return data, means, stds
+
+def NormalizeDataCustom(data, input_columns, target_columns, means, stds):
+    data[input_columns] = (data[input_columns] - means[:len(input_columns)]) / stds[:len(input_columns)]
+    data[target_columns] = (data[target_columns] - means[len(input_columns):]) / stds[len(input_columns):]
+    return data
 
 def NormalizeDataWithMeansStds(data, input_columns, target_columns, means, stds):
     data[input_columns] = (data[input_columns] - means[:len(input_columns)]) / stds[:len(input_columns)]
