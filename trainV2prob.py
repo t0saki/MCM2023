@@ -3,7 +3,7 @@ import pandas as pd
 from torch.utils.data import Dataset, DataLoader
 import torchvision.transforms as transforms
 from transformers import RobertaTokenizer
-from models.CustomNetV2 import CustomNetV2
+from models.CustomNetV2prob import CustomNetV2prob
 from tqdm import tqdm
 from utils import resize_word_list, NormalizeData
 
@@ -34,7 +34,8 @@ class TrainingDataset(Dataset):
         weeknum = row['WeekNum']
         contest_num = row['Contest number']
         isHoliday = row['isHoliday']
-        targets = row[['Number of reported results', 'Number in hard mode', '1 try', '2 tries', '3 tries', '4 tries', '5 tries', '6 tries', '7 or more tries (X)']].values.astype(float)
+        # targets = row[['Number of reported results', 'Number in hard mode', '1 try', '2 tries', '3 tries', '4 tries', '5 tries', '6 tries', '7 or more tries (X)']].values.astype(float)
+        targets = row[['1 try', '2 tries', '3 tries', '4 tries', '5 tries', '6 tries', '7 or more tries (X)']].values.astype(float)
 
         # Tokenize the input word
         input_ids = self.tokenizer.encode(word, add_special_tokens=True, return_tensors='pt', max_length=5, truncation=True)
@@ -151,8 +152,8 @@ dataloader = DataLoader(dataset, batch_size=16, shuffle=False)
 #     batch[1] = normalizer_output(batch[1])
 
 # Create model and move to device
-model = CustomNetV2('roberta-base', num_numbers=5)
-model.load_state_dict(torch.load("/mnt/d/checkpoints/wordleV2.1_1000epochs 1.7660e-02"))
+model = CustomNetV2prob('roberta-base', num_numbers=5)
+# model.load_state_dict(torch.load("/mnt/d/checkpoints/wordleV2.1_1000epochs 1.7660e-02"))
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model.to(device)
 
@@ -175,7 +176,7 @@ print(dataloader.dataset.data.head(6))
 # dataloader.dataset.data = dataloader.dataset.data.iloc[2:]
 
 # Save loss to csv
-with open('loss.csv', 'w') as f:
+with open('lossprob.csv', 'w') as f:
     f.write('Epoch, Loss\n')
 
 # Train model
@@ -187,10 +188,10 @@ for epoch in range(num_epochs):
     # Print the loss for the epoch
     print(f"Epoch {epoch+1} loss: {train_loss_str}")
     # Save loss to csv
-    with open('loss.csv', 'a') as f:
+    with open('lossprob.csv', 'a') as f:
         f.write(f'{epoch+1}, {train_loss_str}\n')
     if epoch % 50 == 0:
-        torch.save(model.state_dict(), "/mnt/d/checkpoints/"+"wordleV2.1"+"_"+str(epoch)+"epochs "+train_loss_str)
+        torch.save(model.state_dict(), "/mnt/d/checkpoints/"+"probV2.1"+"_"+str(epoch)+"epochs "+train_loss_str)
 
 # Save model
-torch.save(model.state_dict(), "checkpoints/"+"wordleV2.1"+"_"+str(num_epochs)+"final "+train_loss_str)
+torch.save(model.state_dict(), "checkpoints/"+"probV2.1"+"_"+str(num_epochs)+"final "+train_loss_str)
