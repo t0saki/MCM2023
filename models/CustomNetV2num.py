@@ -71,21 +71,11 @@ class CustomNetV2num(nn.Module):
         chars_output = self.chars_fcn(input_chars)
         chars_output = chars_output.squeeze(1)
 
-        # print(pooled_output.shape)
-        # print(numbers_output.shape)
-        # print(chars_output.shape)
-        # print(input_chars.shape)
-
         # Concatenate RoBERTa and number outputs
         combined = torch.cat((pooled_output, numbers_output, chars_output), dim=1)
 
         # Get combined output
         output = self.combined_fcn(combined)
 
-        # Split output into two numbers and 7 probabilities that sum to 1
-        # output_nums, output_probs = output[:, :2], output[:, 2:]
-        # output_probs = nn.functional.softmax(output_probs, dim=1)
-
         # Return final output
-        # return torch.cat((output_nums, output_probs), dim=1)
         return output

@@ -53,7 +53,7 @@ class CustomNetV2prob(nn.Module):
             nn.Linear(32, 16),
             nn.ReLU(),
             nn.Dropout(0.2),
-            nn.Linear(16, 2)
+            nn.Linear(16, 7)
         )
 
     def forward(self, input_ids, attention_mask, input_numbers, input_chars):
@@ -82,7 +82,7 @@ class CustomNetV2prob(nn.Module):
 
         # # Split output into two numbers and 7 probabilities that sum to 1
         # output_nums, output_probs = output[:, :2], output[:, 2:]
-        # output = nn.functional.softmax(output, dim=1)
+        output = nn.functional.softmax(output, dim=1)
 
         # Return final output
         # return torch.cat((output_nums, output_probs), dim=1)

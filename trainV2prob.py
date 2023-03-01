@@ -53,12 +53,6 @@ class TrainingDataset(Dataset):
             if word_lower[i] != '0':
                 input_chars[0, 26*i+ord(word_lower[i])-97] = 1
 
-
-        # print(input_ids.shape)
-        # print(attention_mask.shape)
-        # print(input_chars.shape)
-
-
         # Combine inputs into a dictionary
         inputs = {
             'input_ids': input_ids.squeeze(0),
@@ -66,13 +60,6 @@ class TrainingDataset(Dataset):
             'input_numbers': torch.tensor([[month, day, weeknum, contest_num, isHoliday]]).float(),
             'input_chars': input_chars.float()
         }
-
-        # # Print inputs and targets shapes
-        # print(f"Input IDs shape: {inputs['input_ids'].shape}")
-        # print(f"Attention mask shape: {inputs['attention_mask'].shape}")
-        # print(f"Input numbers shape: {inputs['input_numbers'].shape}")
-        # print(f"Targets shape: {targets.shape}")
-
 
         return inputs, targets
 
@@ -107,9 +94,6 @@ def train(model, dataloader, optimizer, criterion, device):
             pbar.update(1)
             pbar.set_description(f"Batch loss: {total_loss_str}")
 
-            # if epoch_count % 10 == 0:
-            #     torch.save(model.state_dict(), "checkpoints/"+"wordle"+"_"+str(epoch_count)+"batches")
-
     return total_loss / len(dataloader)
 
 # Load data and tokenizer
@@ -120,16 +104,6 @@ data_dict = data.to_dict('records')
 print(data.head())
 for column in data.columns:
     print(column)
-
-
-# tries percentage should be divided by 100
-# data[target_columns_percentage] = data[target_columns_percentage].div(100)
-
-# # Normalize the data, target_columns without percentage
-# data, means, stds = NormalizeData(data, input_columns, target_columns_no_percentage)
-# # record the means and stds to a file
-# with open('means_stds_prob.txt', 'w') as f:
-#     f.write(str(means) + '\n' + str(stds))
 
 # Read the means and stds from means_stds.txt, 2 lines
 with open('means_stds_prob.txt', 'r') as f:
@@ -148,11 +122,6 @@ stds = [float(i) for i in means_stds[1]]
 # Normalize the data
 data = NormalizeDataCustom(data, input_columns, target_columns_no_percentage, means, stds)
 
-# tuple data to dict, recovery column names from data_dict
-# data_new = []
-# for i in range(len(data)):
-#     data_new.append({**data_dict[i], **data.iloc[i].to_dict()})
-
 tokenizer = RobertaTokenizer.from_pretrained('roberta-base')
 
 # Resize every word into 5 tokens, if word is longer than 5 tokens, truncate it, if word is shorter than 5 tokens, pad it with 0
@@ -161,19 +130,6 @@ data[word_column] = resize_word_list(data[word_column])
 # Create dataset and dataloader
 dataset = TrainingDataset(data, tokenizer)
 dataloader = DataLoader(dataset, batch_size=16, shuffle=True)
-
-# # Normalize the dataloader
-# mean_input = torch.mean(torch.cat([batch[0]['input_numbers'] for batch in dataloader]))
-# std_input = torch.std(torch.cat([batch[0]['input_numbers'] for batch in dataloader]))
-# print(mean_input, std_input)
-# mean_output = torch.mean(torch.cat([batch[1] for batch in dataloader]))
-# std_output = torch.std(torch.cat([batch[1] for batch in dataloader]))
-# print(mean_output, std_output)
-# normalizer_input = transforms.Normalize(mean=mean_input, std=std_input)
-# normalizer_output = transforms.Normalize(mean=mean_output, std=std_output)
-# for batch in dataloader:
-#     batch[0]['input_numbers'] = normalizer_input(batch[0]['input_numbers'])
-#     batch[1] = normalizer_output(batch[1])
 
 # Create model and move to device
 model = CustomNetV2prob('roberta-base', num_numbers=5)
@@ -188,16 +144,6 @@ optimizer = torch.optim.Adam(model.parameters(), lr=1e-5)
 
 # # print first 6 rows of dataloader
 print(dataloader.dataset.data.head(6))
-# # stack expects each tensor to be equal size, print shape of each tensor in dataloader
-# for batch_inputs, batch_targets in dataloader:
-#     print(batch_inputs['input_ids'].shape)
-#     print(batch_inputs['attention_mask'].shape)
-#     print(batch_inputs['input_numbers'].shape)
-#     print(batch_targets.shape)
-#     break
-
-# drop the first line of the data
-# dataloader.dataset.data = dataloader.dataset.data.iloc[2:]
 
 # Save loss to csv
 with open('lossprob.csv', 'w') as f:
